@@ -1,0 +1,9 @@
+services:
+  transcode_tycoon_api:
+    container_name: transcode_tycoon_api
+    user: "1000:1000"
+    build: .
+    ports:
+      - 8000:8000
+    restart: unless-stopped
+  

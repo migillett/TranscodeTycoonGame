@@ -1,13 +1,13 @@
-from uuid import uuid4
+from typing import Optional
 
 from transcode_tycoon.models.jobs import JobInfoQueued
 from transcode_tycoon.models.computer import ComputerInfo
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
 class UserInfo(BaseModel):
-    user_id: str = Field(default=f'usr{uuid4().hex[:8]}')
+    user_id: str
     completed_jobs: list[JobInfoQueued] = []
     job_queue: list[JobInfoQueued] = []
     funds: float
@@ -15,7 +15,7 @@ class UserInfo(BaseModel):
 
 
 class LeaderboardUser(BaseModel):
-    rank: int
+    rank: Optional[int] = None
     user_id: str
     completed_jobs: int
     funds: float
@@ -25,3 +25,7 @@ class Leaderboard(BaseModel):
     total: int
     start: int = 0
     users: list[LeaderboardUser]
+
+class CreateUserResponse(BaseModel):
+    token: str
+    user_info: UserInfo

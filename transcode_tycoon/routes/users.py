@@ -2,8 +2,9 @@ import logging
 
 from transcode_tycoon.models.users import UserInfo, Leaderboard, LeaderboardUser
 from transcode_tycoon.game_logic import game_logic, ItemNotFoundError
+from transcode_tycoon.utils.auth import get_current_user
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 
 
 logger = logging.getLogger(__name__)
@@ -16,20 +17,29 @@ router = APIRouter(
 )
 
 
-@router.get("/")
-async def get_user_info(user_id: str) -> UserInfo:
+@router.get("/my_info")
+async def get_my_user_info(user_info: UserInfo = Depends(get_current_user)) -> UserInfo:
     '''
     Returns your user information including your user ID, completed jobs, and total funds.
     '''
+    game_logic.check_user_jobs(user_info)
+    return user_info
+
+
+@router.get('/search/{user_id}')
+async def lookup_user_by_id(user_id: str) -> LeaderboardUser:
     try:
-        user = game_logic.get_user(user_id)
+        user_info = game_logic.get_user(user_id)
+        return LeaderboardUser(
+            user_id=user_info.user_id,
+            completed_jobs=len(user_info.completed_jobs),
+            funds=user_info.funds
+        )
     except ItemNotFoundError as e:
         raise HTTPException(
-            status_code=404,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e)
         )
-    return user
-
 
 @router.get('/leaderboard')
 async def get_leaderboard(start: int = 0, items: int = 10) -> Leaderboard:
@@ -59,13 +69,3 @@ async def get_leaderboard(start: int = 0, items: int = 10) -> Leaderboard:
             ) for index, user in enumerate(users_sorted[start:start + items])
         ]
     )
-
-
-@router.post('/register')
-async def register_user() -> UserInfo:
-    '''
-    Registers a new user and returns a unique user ID.
-    '''
-    user = game_logic.create_user()
-    logger.info(f"Registered new user with ID {user.user_id}")
-    return user

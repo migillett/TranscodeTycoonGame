@@ -3,11 +3,12 @@ from datetime import datetime, timedelta
 from uuid import uuid4
 from random import choice
 
-from transcode_tycoon.models.users import UserInfo
+from transcode_tycoon.models.users import UserInfo, CreateUserResponse
 from transcode_tycoon.models.jobs import JobInfo, JobInfoQueued, JobStatus, Format, Priority
 from transcode_tycoon.models.computer import ComputerInfo, HardwareType, HardwareStats
 
 import numpy as np
+import hashlib
 
 class ItemNotFoundError(Exception):
     pass
@@ -101,7 +102,7 @@ class TranscodeTycoonGameLogic:
     def purchase_upgrade(self, user_info: UserInfo, upgrade_type: HardwareType) -> UserInfo:
         hardware_stat = user_info.computer.hardware.get(upgrade_type)
         if hardware_stat is None:
-            raise ItemNotFoundError(f'Computer {user_info.computer.computer_id} does not have a {upgrade_type.value} to upgrade.')
+            raise ItemNotFoundError(f'Computer does not have a {upgrade_type.value} to upgrade.')
         if hardware_stat.upgrade_price > user_info.funds:
             raise InsufficientResources(
                 f"You lack enough funds to purchase this upgrade. Price: ${hardware_stat.upgrade_price} | Funds: ${user_info.funds}"
@@ -120,14 +121,30 @@ class TranscodeTycoonGameLogic:
         self.check_user_jobs(user_info=user_info)
         return user_info
     
-    def create_user(self) -> UserInfo:
+    def hash_token_to_user_id(self, user_token: str) -> str:
+        return f'usr{hashlib.sha256(user_token.encode()).hexdigest()[:10]}'
+
+    def create_user(self) -> CreateUserResponse:
+        '''
+        Creates a new user and a basic computer to get you started.
+
+        Be sure to save your `token` as you'll need this for all future requests.
+        '''
+        user_token = str(uuid4())
+
+        user_id = self.hash_token_to_user_id(user_token)
         user = UserInfo(
+            user_id=user_id,
             funds=self.initial_funds,
             computer=self.create_new_computer()
         )
-        self.users[user.user_id] = user
+        self.users[user_id] = user
         logger.info(f'Created new user: {user.user_id}')
-        return user
+        response = CreateUserResponse(
+            token=user_token,
+            user_info=user
+        )
+        return response
     
     ### JOBS ###
     def purge_available_jobs(self) -> None:
@@ -148,8 +165,11 @@ class TranscodeTycoonGameLogic:
             j for j in user_info.job_queue
             if j.status != JobStatus.COMPLETED
         ]
-        if len(user_info.job_queue) > 0:
-            user_info.job_queue[0].status = JobStatus.IN_PROGRESS
+        for job_index, job in enumerate(user_info.job_queue):
+            if job_index == 0:
+                job.status = JobStatus.IN_PROGRESS
+            else:
+                job.status = JobStatus.QUEUED
 
     def __left_weighted_trt__(self, min_value: int = 30, max_value: int = 7200) -> float:
         alpha, beta = 1, 6
@@ -188,14 +208,12 @@ class TranscodeTycoonGameLogic:
         self.jobs[job_data.job_id] = job_data
         logger.debug(f"Added job with ID {job_data.job_id}")
 
-    def register_job(self, job_id: str, user_id: str) -> None:
-        user = self.get_user(user_id)
-
+    def register_job(self, job_id: str, user_info: UserInfo) -> None:
         # RAM in GB is the maximum number of jobs allowed in the queue
-        if len(user.job_queue) >= user.computer.hardware[HardwareType.RAM].value:
+        if len(user_info.job_queue) >= user_info.computer.hardware[HardwareType.RAM].value:
             raise InsufficientResources(
                 f'Not enough available RAM to queue another render job.')
-
+        
         try:
             job = self.jobs.pop(job_id)
         except KeyError:
@@ -203,18 +221,20 @@ class TranscodeTycoonGameLogic:
 
         estimated_render_time = self.__calculate_completion_timedelta__(
             job_info=job,
-            computer_info=user.computer)
-        if len(user.job_queue) == 0:
+            computer_info=user_info.computer)
+        if len(user_info.job_queue) == 0:
+            job.status = JobStatus.IN_PROGRESS
             job_completion_ts = datetime.now() + timedelta(seconds=estimated_render_time)
         else:
-            job_completion_ts = user.job_queue[-1].estimated_completion_ts + timedelta(seconds=estimated_render_time)
+            job.status = JobStatus.QUEUED
+            job_completion_ts = user_info.job_queue[-1].estimated_completion_ts + timedelta(seconds=estimated_render_time)
         queued_job = JobInfoQueued(
             **job.model_dump(),
             estimated_completion_ts=job_completion_ts,
             render_time_seconds=estimated_render_time,
         )
-        user.job_queue.append(queued_job)
-        logger.debug(f"User {user_id} registered job {queued_job.job_id}")
+        user_info.job_queue.append(queued_job)
+        logger.debug(f"User {user_info.user_id} registered job {queued_job.job_id}")
 
 
 game_logic = TranscodeTycoonGameLogic()

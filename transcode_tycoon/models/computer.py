@@ -18,7 +18,6 @@ class HardwareType(StrEnum):
     # GPU = "GPU" # TODO - how to handle upgrades where level == 0?
 
 class ComputerInfo(BaseModel):
-    computer_id: str = Field(default=f'comp{uuid4().hex[:8]}')
     hardware: dict[HardwareType, HardwareStats] = Field(default_factory=dict)
 
     @computed_field

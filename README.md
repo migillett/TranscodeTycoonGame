@@ -1,31 +1,17 @@
-USERS:
-POST /create
-    creates user token
-GET /user
-    get your user info (including $$$)
-GET /leaderboard
-    most $$$
+# Transcode Tycoon API Game
 
-JOBS:
-GET /jobs
-    list available render jobs (with filters)
+A simple API idle game written using Python3 and FastAPI. You have a computer that renders videos for money. You get payouts depending on the videos format and the total run time. The more pixels you push, the more you get paid (in fake money).
 
-RENDER QUEUE:
-POST /queue
-    add job to queue
-GET /queue
-    check status of current jobs
+Use your money to upgrade your rig's CPU, Clock Speed, and RAM. The more you upgrade, the faster you can render video.
 
-COMPUTERS:
-GET /computers
-    list computers
-GET /computers/n
-    get specific computer
-GET /computers/n/upgrades
-    get upgrades
-POST /computers/n/upgrades/{id}
-    purchase upgrade
+Try to automate the process and climb the learderboard.
 
-UPGRADES:
-upgrade computer
-list available upgrades
+## Running Locally
+
+Clone the repository and run:
+
+```bash
+docker compose up -d --force-recreate
+```
+
+That command will build the container from the source and start the API. If you want to remap the default port `8000` to something else, modify the `docker-compose.yml` file.

@@ -37,6 +37,7 @@ class TranscodeTycoonGameLogic:
 
         self.base_price = 20
         self.cost_multiplier = 1.5
+        self.initial_funds = 40
 
     ### UTILITIES ###
     def __calculate_render_difficulty__(self, job_info: JobInfo) -> float:
@@ -81,13 +82,13 @@ class TranscodeTycoonGameLogic:
                     value=2.0,
                     unit='GB',
                     upgrade_increment=1.0,
-                    upgrade_price=20.0
+                    upgrade_price=10.0
                 ),
                 HardwareType.CLOCK_SPEED: HardwareStats(
                     value=2.0,
                     unit='GHz',
-                    upgrade_increment=0.5,
-                    upgrade_price=20.0
+                    upgrade_increment=1.0,
+                    upgrade_price=10.0
                 )
             }
         )
@@ -121,6 +122,7 @@ class TranscodeTycoonGameLogic:
     
     def create_user(self) -> UserInfo:
         user = UserInfo(
+            funds=self.initial_funds,
             computer=self.create_new_computer()
         )
         self.users[user.user_id] = user
@@ -146,6 +148,8 @@ class TranscodeTycoonGameLogic:
             j for j in user_info.job_queue
             if j.status != JobStatus.COMPLETED
         ]
+        if len(user_info.job_queue) > 0:
+            user_info.job_queue[0].status = JobStatus.IN_PROGRESS
 
     def __left_weighted_trt__(self, min_value: int = 30, max_value: int = 7200) -> float:
         alpha, beta = 1, 6
@@ -201,10 +205,8 @@ class TranscodeTycoonGameLogic:
             job_info=job,
             computer_info=user.computer)
         if len(user.job_queue) == 0:
-            job.status = JobStatus.IN_PROGRESS
             job_completion_ts = datetime.now() + timedelta(seconds=estimated_render_time)
         else:
-            job.status = JobStatus.QUEUED
             job_completion_ts = user.job_queue[-1].estimated_completion_ts + timedelta(seconds=estimated_render_time)
         queued_job = JobInfoQueued(
             **job.model_dump(),

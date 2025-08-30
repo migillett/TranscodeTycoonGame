@@ -36,7 +36,7 @@ class JobInfo(BaseModel):
     @computed_field
     @property
     def payout(self) -> float:
-        # base rate $ per hour of video
+        # base rate $ per minute of video
         base_rate = {
             Format.UHD: 10.0,
             Format.FHD: 5.0,
@@ -50,8 +50,9 @@ class JobInfo(BaseModel):
             Priority.HIGH: 2.0
         }[self.priority]
 
-        return round(base_rate * priority_multiplier * (self.total_run_time / 3600), 2)
+        return round(base_rate * priority_multiplier * (self.total_run_time / 60), 2)
 
 
 class JobInfoQueued(JobInfo):
     estimated_completion_ts: datetime
+    render_time_seconds: float

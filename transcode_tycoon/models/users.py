@@ -12,9 +12,16 @@ class UserInfo(BaseModel):
     job_queue: list[JobInfoQueued] = []
     funds: float = 0.0
     computer: ComputerInfo = ComputerInfo()
-    
+
+
+class LeaderboardUser(BaseModel):
+    rank: int
+    user_id: str
+    completed_jobs: int
+    funds: float
+
 
 class Leaderboard(BaseModel):
     total: int
     start: int = 0
-    users: list[UserInfo]
+    users: list[LeaderboardUser]

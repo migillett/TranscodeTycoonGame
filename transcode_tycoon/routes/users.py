@@ -1,6 +1,6 @@
 import logging
 
-from transcode_tycoon.models.users import UserInfo, Leaderboard
+from transcode_tycoon.models.users import UserInfo, Leaderboard, LeaderboardUser
 from transcode_tycoon.game_logic import game_logic, ItemNotFoundError
 
 from fastapi import APIRouter, HTTPException
@@ -50,7 +50,14 @@ async def get_leaderboard(start: int = 0, items: int = 10) -> Leaderboard:
     return Leaderboard(
         total=len(users_sorted),
         start=start,
-        users=users_sorted[start:start + items]
+        users=[
+            LeaderboardUser(
+                rank=index + 1 + start,
+                user_id=user.user_id,
+                completed_jobs=len(user.completed_jobs),
+                funds=user.funds
+            ) for index, user in enumerate(users_sorted[start:start + items])
+        ]
     )
 
 

@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 
-from transcode_tycoon.routes import users, jobs
+from transcode_tycoon.routes import users, jobs, upgrades
 from transcode_tycoon.game_logic import game_logic
 from transcode_tycoon.models.computer import ComputerInfo
 from transcode_tycoon.models.jobs import Priority, Format
@@ -39,6 +39,7 @@ async def render_home_page():
 
 app.include_router(users.router)
 app.include_router(jobs.router)
+app.include_router(upgrades.router)
 
 
 if __name__ == "__main__":
@@ -46,7 +47,7 @@ if __name__ == "__main__":
         game_logic.add_user(
             users.UserInfo(
                 user_id='user',
-                funds=0.0,
+                funds=200.0,
                 computer=ComputerInfo()
             )
         )

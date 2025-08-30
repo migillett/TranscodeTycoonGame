@@ -44,13 +44,7 @@ app.include_router(upgrades.router)
 
 if __name__ == "__main__":
     if DEBUG:
-        game_logic.add_user(
-            users.UserInfo(
-                user_id='user',
-                funds=200.0,
-                computer=ComputerInfo()
-            )
-        )
+        game_logic.create_user()
         
         game_logic.add_job(
             jobs.JobInfo(

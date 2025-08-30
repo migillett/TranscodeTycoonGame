@@ -1,11 +1,11 @@
 import logging
 from datetime import datetime, timedelta
 from uuid import uuid4
-from random import choice, randint
+from random import choice
 
 from transcode_tycoon.models.users import UserInfo
 from transcode_tycoon.models.jobs import JobInfo, JobInfoQueued, JobStatus, Format, Priority
-from transcode_tycoon.models.computer import ComputerInfo, UpgradePayload, HardwareType, UpgradePricing
+from transcode_tycoon.models.computer import ComputerInfo, HardwareType, HardwareStats
 
 import numpy as np
 
@@ -68,71 +68,47 @@ class TranscodeTycoonGameLogic:
         difficulty = self.__calculate_render_difficulty__(job_info)
         return round(difficulty / computer_info.processing_power, 4)
     
-    def get_next_upgrade_cost(self, upgrade_level: int) -> float:
-        """Get cost for the next upgrade"""
-        return round(self.base_price * (self.cost_multiplier ** upgrade_level), 2)
-
-    def get_upgrade_costs(self, user_info: UserInfo, upgrade_type: HardwareType) -> UpgradePricing:
-        comp_info = user_info.computer
-        match upgrade_type:
-            case HardwareType.CPU_CORES:
-                current = comp_info.cpu_cores
-                increase = 2.0
-                price = self.get_next_upgrade_cost(comp_info._cores_level)
-            case HardwareType.CLOCK_SPEED:
-                current = comp_info.cpu_ghz
-                increase = 0.5
-                price = self.get_next_upgrade_cost(comp_info._clock_level)
-            case HardwareType.RAM:
-                current = comp_info.ram_gb
-                increase = 2.0
-                price = self.get_next_upgrade_cost(comp_info._ram_level)
-
-        return UpgradePricing(
-            upgrade_type=upgrade_type,
-            current=current,
-            increase_amount=increase,
-            price=price,
+    def create_new_computer(self) -> ComputerInfo:
+        comp = ComputerInfo(
+            hardware={
+                HardwareType.CPU_CORES: HardwareStats(
+                    value=2.0,
+                    unit='Cores',
+                    upgrade_increment=2.0,
+                    upgrade_price=20.0
+                ),
+                HardwareType.RAM: HardwareStats(
+                    value=2.0,
+                    unit='GB',
+                    upgrade_increment=1.0,
+                    upgrade_price=20.0
+                ),
+                HardwareType.CLOCK_SPEED: HardwareStats(
+                    value=2.0,
+                    unit='GHz',
+                    upgrade_increment=0.5,
+                    upgrade_price=20.0
+                )
+            }
         )
+        return comp
+    
+    def calculate_next_upgrade_cost(self, hardware_stat: HardwareStats) -> float:
+        """Get cost for the next upgrade"""
+        return round(self.base_price * (self.cost_multiplier ** hardware_stat.current_level), 2)
     
     def purchase_upgrade(self, user_info: UserInfo, upgrade_type: HardwareType) -> UserInfo:
-        upgrade_stats = self.get_upgrade_costs(user_info, upgrade_type)
-        if user_info.funds < upgrade_stats.price:
+        hardware_stat = user_info.computer.hardware.get(upgrade_type)
+        if hardware_stat is None:
+            raise ItemNotFoundError(f'Computer {user_info.computer.computer_id} does not have a {upgrade_type.value} to upgrade.')
+        if hardware_stat.upgrade_price > user_info.funds:
             raise InsufficientResources(
-                f"You lack enough funds to purchase this upgrade. Price: ${upgrade_stats.price} | Funds: ${user_info.funds}"
+                f"You lack enough funds to purchase this upgrade. Price: ${hardware_stat.upgrade_price} | Funds: ${user_info.funds}"
             )
-        match upgrade_type:
-            case HardwareType.CPU_CORES:
-                user_info.computer.cpu_cores += upgrade_stats.increase_amount
-                user_info.computer._cores_level += 1
-            case HardwareType.CLOCK_SPEED:
-                user_info.computer.cpu_ghz += upgrade_stats.increase_amount
-                user_info.computer._clock_level += 1
-            case HardwareType.RAM:
-                user_info.computer.ram_gb += upgrade_stats.increase_amount
-                user_info.computer._ram_level += 1
-        user_info.funds -= upgrade_stats.price
-        logger.info(f'User {user_info.user_id} upgraded {upgrade_type} for ${upgrade_stats.price}')
-        return user_info
-
-
-    def upgrade_computer(self, user_id: str, upgrade_payload: UpgradePayload) -> UserInfo:
-        user_info = self.users.get(user_id)
-        if not user_info:
-            raise ItemNotFoundError(f"User with ID {user_id} not found.")
-        
-        if len(user_info.job_queue) > 0:
-            raise ComputerUpgradeError('Unable to upgrade computer while jobs are in queue')
-        
-        logger.info(f'Upgrading user computer: {upgrade_payload.model_dump()}')
-        match upgrade_payload.upgrade_type:
-            case HardwareType.CPU_CORES:
-                user_info.computer.cpu_cores += int(upgrade_payload.upgrade_amount)
-            case HardwareType.CLOCK_SPEED:
-                user_info.computer.cpu_ghz += upgrade_payload.upgrade_amount
-            case HardwareType.RAM:
-                user_info.computer.ram_gb += int(upgrade_payload.upgrade_amount)
-        
+        hardware_stat.current_level += 1
+        logger.info(f'User {user_info.user_id} upgraded {upgrade_type} to level {hardware_stat.current_level} for ${hardware_stat.upgrade_price}')
+        hardware_stat.value += hardware_stat.upgrade_increment
+        hardware_stat.upgrade_price = self.calculate_next_upgrade_cost(hardware_stat)
         return user_info
         
     ### USERS ###
@@ -143,8 +119,13 @@ class TranscodeTycoonGameLogic:
         self.check_user_jobs(user_info=user_info)
         return user_info
     
-    def add_user(self, user_info: UserInfo) -> None:
-        self.users[user_info.user_id] = user_info
+    def create_user(self) -> UserInfo:
+        user = UserInfo(
+            computer=self.create_new_computer()
+        )
+        self.users[user.user_id] = user
+        logger.info(f'Created new user: {user.user_id}')
+        return user
     
     ### JOBS ###
     def purge_available_jobs(self) -> None:
@@ -207,7 +188,7 @@ class TranscodeTycoonGameLogic:
         user = self.get_user(user_id)
 
         # RAM in GB is the maximum number of jobs allowed in the queue
-        if len(user.job_queue) >= user.computer.ram_gb:
+        if len(user.job_queue) >= user.computer.hardware[HardwareType.RAM].value:
             raise InsufficientResources(
                 f'Not enough available RAM to queue another render job.')
 

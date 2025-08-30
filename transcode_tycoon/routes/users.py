@@ -66,7 +66,6 @@ async def register_user() -> UserInfo:
     '''
     Registers a new user and returns a unique user ID.
     '''
-    user = UserInfo()
-    game_logic.add_user(user)
+    user = game_logic.create_user()
     logger.info(f"Registered new user with ID {user.user_id}")
     return user

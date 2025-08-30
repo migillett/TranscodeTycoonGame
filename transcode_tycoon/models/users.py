@@ -10,7 +10,7 @@ class UserInfo(BaseModel):
     user_id: str = Field(default=f'usr{uuid4().hex[:8]}')
     completed_jobs: list[JobInfoQueued] = []
     job_queue: list[JobInfoQueued] = []
-    funds: float = 0.0
+    funds: float = 100.0
     computer: ComputerInfo = ComputerInfo()
 
 

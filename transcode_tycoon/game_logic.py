@@ -5,7 +5,7 @@ from random import choice
 import json
 from os import path, makedirs
 
-from transcode_tycoon.models.users import UserInfo, CreateUserResponse
+from transcode_tycoon.models.users import UserInfo, CreateUserResponse, PatchUserInfo
 from transcode_tycoon.models.jobs import JobInfo, JobInfoQueued, JobStatus, Format, Priority
 from transcode_tycoon.models.computer import ComputerInfo, HardwareType, HardwareStats
 
@@ -189,6 +189,13 @@ class TranscodeTycoonGameLogic:
         )
         return response
     
+    def update_user(self, user_id: str, user_update: PatchUserInfo) -> UserInfo:
+        update_payload = user_update.model_dump(mode='json', exclude_none=True)
+        logger.info(f'Updating user {user_id} with payload: {update_payload}')
+        for k, v in update_payload.items():
+            self.users[user_id].__setattr__(k, v)
+        return self.get_user(user_id)
+
     ### JOBS ###
     def purge_available_jobs(self) -> None:
         self.jobs = {}

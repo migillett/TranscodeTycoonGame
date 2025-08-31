@@ -8,15 +8,19 @@ from pydantic import BaseModel
 
 class UserInfo(BaseModel):
     user_id: str
+    username: Optional[str] = ''
     completed_jobs: list[JobInfoQueued] = []
     job_queue: list[JobInfoQueued] = []
     funds: float
     computer: ComputerInfo = ComputerInfo()
 
+class PatchUserInfo(BaseModel):
+    username: Optional[str] = None
 
 class LeaderboardUser(BaseModel):
     rank: Optional[int] = None
     user_id: str
+    username: Optional[str] = ''
     completed_jobs: int
     processing_power: float
     funds: float

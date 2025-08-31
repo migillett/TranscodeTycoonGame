@@ -1,6 +1,6 @@
 import logging
 
-from transcode_tycoon.models.users import UserInfo, Leaderboard, LeaderboardUser
+from transcode_tycoon.models.users import UserInfo, Leaderboard, LeaderboardUser, PatchUserInfo
 from transcode_tycoon.game_logic import game_logic, ItemNotFoundError
 from transcode_tycoon.utils.auth import get_current_user
 
@@ -25,6 +25,15 @@ async def get_my_user_info(user_info: UserInfo = Depends(get_current_user)) -> U
     game_logic.check_user_jobs(user_info)
     return user_info
 
+@router.patch('/my_info')
+async def update_user_info(
+    user_update_payload: PatchUserInfo,
+    user_info: UserInfo = Depends(get_current_user)
+) -> UserInfo:
+    return game_logic.update_user(
+        user_id=user_info.user_id,
+        user_update=user_update_payload
+    )
 
 @router.get('/search/{user_id}')
 async def lookup_user_by_id(user_id: str) -> LeaderboardUser:
@@ -32,8 +41,10 @@ async def lookup_user_by_id(user_id: str) -> LeaderboardUser:
         user_info = game_logic.get_user(user_id)
         return LeaderboardUser(
             user_id=user_info.user_id,
+            username=user_info.username,
             completed_jobs=len(user_info.completed_jobs),
-            funds=user_info.funds
+            funds=user_info.funds,
+            processing_power=user_info.computer.processing_power,
         )
     except ItemNotFoundError as e:
         raise HTTPException(

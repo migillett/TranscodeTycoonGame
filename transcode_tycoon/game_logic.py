@@ -73,7 +73,7 @@ class TranscodeTycoonGameLogic:
 
         with open(self.json_backup, 'w') as json_file:
             user_dump = {
-                k: v.model_dump() for k, v in self.users.items()
+                k: v.model_dump(mode='json') for k, v in self.users.items()
             }
             json.dump(user_dump, json_file, indent=2)
             logger.info(f'Dumped users to: {self.json_backup}')

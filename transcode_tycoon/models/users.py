@@ -3,19 +3,19 @@ from typing import Optional
 from transcode_tycoon.models.jobs import JobInfoQueued
 from transcode_tycoon.models.computer import ComputerInfo
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class UserInfo(BaseModel):
     user_id: str
-    username: Optional[str] = ''
+    username: Optional[str] = Field(max_length=50, default='')
     completed_jobs: list[JobInfoQueued] = []
     job_queue: list[JobInfoQueued] = []
     funds: float
     computer: ComputerInfo = ComputerInfo()
 
 class PatchUserInfo(BaseModel):
-    username: Optional[str] = None
+    username: Optional[str] = Field(max_length=50, default='')
 
 class LeaderboardUser(BaseModel):
     rank: Optional[int] = None

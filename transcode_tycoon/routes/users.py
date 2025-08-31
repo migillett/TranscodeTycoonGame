@@ -65,7 +65,8 @@ async def get_leaderboard(start: int = 0, items: int = 10) -> Leaderboard:
                 rank=index + 1 + start,
                 user_id=user.user_id,
                 completed_jobs=len(user.completed_jobs),
-                funds=user.funds
+                funds=user.funds,
+                processing_power=user.computer.processing_power,
             ) for index, user in enumerate(users_sorted[start:start + items])
         ]
     )

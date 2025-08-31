@@ -41,12 +41,14 @@ async def list_available_jobs(job_id: Optional[str] = None) -> list[JobInfo] | J
         return jobs
 
 @router.post("/claim", status_code=status.HTTP_202_ACCEPTED)
-async def claim_job(job_id: str, user_info: UserInfo = Depends(get_current_user)):
+async def claim_job(job_id: str, user_info: UserInfo = Depends(get_current_user)) -> UserInfo:
     '''
     Claims a job for a user.
     '''
     try:
         game_logic.register_job(job_id, user_info)
+        game_logic.check_user_jobs(user_info)
+        return user_info
     except ItemNotFoundError as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -57,9 +59,10 @@ async def claim_job(job_id: str, user_info: UserInfo = Depends(get_current_user)
             status_code=status.HTTP_406_NOT_ACCEPTABLE,
             detail=str(e)   
         )
+
     
 @router.delete('/delete', status_code=status.HTTP_202_ACCEPTED)
-async def delete_user_job(job_id: str, user_info: UserInfo = Depends(get_current_user)):
+async def delete_user_job(job_id: str, user_info: UserInfo = Depends(get_current_user)) -> UserInfo:
     '''
     Deletes a job from the user's queue and pushes the completion time of all other jobs up (plus a tiny time penalty).
     '''
@@ -80,3 +83,5 @@ async def delete_user_job(job_id: str, user_info: UserInfo = Depends(get_current
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f'Unable to find a job with ID {job_id} in user job queue.')
     user_info.job_queue = shortened_queue
+    game_logic.check_user_jobs(user_info)
+    return user_info

@@ -18,6 +18,7 @@ class LeaderboardUser(BaseModel):
     rank: Optional[int] = None
     user_id: str
     completed_jobs: int
+    processing_power: float
     funds: float
 
 

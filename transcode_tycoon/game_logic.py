@@ -35,6 +35,9 @@ class TranscodeTycoonGameLogic:
     # TODO - replace with an actual database like SQLite
     def __init__(self, job_board_capacity: int = 25):
         self.users: dict[str, UserInfo] = {}
+
+        # TODO: create user-specific job boards to prevent pulling the same job twice
+        # maybe cater them towards the user's compute capacity?
         self.jobs: dict[str, JobInfo] = {}
         self.job_capacity = job_board_capacity
 

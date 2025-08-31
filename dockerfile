@@ -18,10 +18,14 @@ WORKDIR /home/transcode_tycoon
 # Copy over project files
 COPY --chown=transcode_tycoon:transcode_tycoon ./pyproject.toml ./
 COPY --chown=transcode_tycoon:transcode_tycoon ./transcode_tycoon ./transcode_tycoon
+COPY --chown=transcode_tycoon:transcode_tycoon ./tests ./tests
 RUN mkdir ./logs && chown -R transcode_tycoon:transcode_tycoon /home/transcode_tycoon/logs
 
 # install depdendencies
 RUN pip3 install --user uv && uv sync
+
+# run unit tests
+RUN uv run pytest -s
 
 # make sure we're not running as root
 HEALTHCHECK --interval=30s --timeout=3s \

@@ -33,13 +33,21 @@ logger = logging.getLogger(__name__)
 
 class TranscodeTycoonGameLogic:
     # TODO - replace with an actual database like SQLite
-    def __init__(self, job_board_capacity: int = 25):
-        self.users: dict[str, UserInfo] = {}
+    def __init__(
+            self,
+            job_board_capacity: int = 25,
+            initial_funds: float = 40.0,
+            disable_backups: bool = False,
+        ) -> None:
+        
+        self.job_capacity = job_board_capacity
+        self.initial_funds = initial_funds
+        self.disable_backups = disable_backups
 
+        self.users: dict[str, UserInfo] = {}
         # TODO: create user-specific job boards to prevent pulling the same job twice
         # maybe cater them towards the user's compute capacity?
         self.jobs: dict[str, JobInfo] = {}
-        self.job_capacity = job_board_capacity
 
         self.json_backup = path.join(
             path.dirname(path.abspath(__file__)),
@@ -48,7 +56,6 @@ class TranscodeTycoonGameLogic:
         
         self.base_price = 20
         self.cost_multiplier = 1.5
-        self.initial_funds = 40
 
         self.__load_state__()
 
@@ -74,15 +81,16 @@ class TranscodeTycoonGameLogic:
         if not path.exists(path.dirname(self.json_backup)):
             makedirs(path.dirname(self.json_backup))
 
-        with open(self.json_backup, 'w') as json_file:
-            user_dump = {
-                k: v.model_dump(mode='json') for k, v in self.users.items()
-            }
-            json.dump(user_dump, json_file, indent=2)
-            logger.info(f'Dumped users to: {self.json_backup}')
+        if not self.disable_backups:
+            with open(self.json_backup, 'w') as json_file:
+                user_dump = {
+                    k: v.model_dump(mode='json') for k, v in self.users.items()
+                }
+                json.dump(user_dump, json_file, indent=2)
+                logger.info(f'Dumped users to: {self.json_backup}')
 
     def __load_state__(self) -> None:
-        if path.exists(self.json_backup):
+        if path.exists(self.json_backup) and not self.disable_backups:
             with open(self.json_backup, 'r') as json_file:
                 user_load = json.load(json_file)
                 self.users = {
@@ -244,7 +252,7 @@ class TranscodeTycoonGameLogic:
         self.jobs[job_data.job_id] = job_data
         logger.debug(f"Added job with ID {job_data.job_id}")
 
-    def register_job(self, job_id: str, user_info: UserInfo) -> None:
+    def claim_job(self, job_id: str, user_info: UserInfo) -> None:
         # RAM in GB is the maximum number of jobs allowed in the queue
         if len(user_info.job_queue) >= user_info.computer.hardware[HardwareType.RAM].value:
             raise InsufficientResources(

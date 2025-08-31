@@ -46,7 +46,7 @@ async def claim_job(job_id: str, user_info: UserInfo = Depends(get_current_user)
     Claims a job for a user.
     '''
     try:
-        game_logic.register_job(job_id, user_info)
+        game_logic.claim_job(job_id, user_info)
         game_logic.check_user_jobs(user_info)
         return user_info
     except ItemNotFoundError as e:

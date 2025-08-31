@@ -52,6 +52,14 @@ def test_api_functions():
     assert leaderboard_response.status_code == 200
     assert len(leaderboard_response.json()) >= 2
 
+    # make sure the leaderboard reponse has the username included
+    successful = False
+    for user in leaderboard_response.json()['users']:
+        if user['user_id'] == user_info_base.json()['user_id']:
+            successful = True
+            assert user['username'] == update_params['username']
+    assert successful == True
+
     # searching for a user should return proper response
     user_id = user_info_base.json()["user_id"]
     search_response = client.get(f'/users/search/{user_id}')

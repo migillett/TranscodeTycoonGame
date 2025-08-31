@@ -75,6 +75,7 @@ async def get_leaderboard(start: int = 0, items: int = 10) -> Leaderboard:
             LeaderboardUser(
                 rank=index + 1 + start,
                 user_id=user.user_id,
+                username=user.username,
                 completed_jobs=len(user.completed_jobs),
                 funds=user.funds,
                 processing_power=user.computer.processing_power,

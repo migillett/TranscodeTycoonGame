@@ -189,12 +189,12 @@ class TranscodeTycoonGameLogic:
         )
         return response
     
-    def update_user(self, user_id: str, user_update: PatchUserInfo) -> UserInfo:
+    def update_user(self, user_info: UserInfo, user_update: PatchUserInfo) -> UserInfo:
         update_payload = user_update.model_dump(mode='json', exclude_none=True)
-        logger.info(f'Updating user {user_id} with payload: {update_payload}')
+        logger.info(f'Updating user {user_info.user_id} with payload: {update_payload}')
         for k, v in update_payload.items():
-            self.users[user_id].__setattr__(k, v)
-        return self.get_user(user_id)
+            user_info.__setattr__(k, v)
+        return self.get_user(user_info.user_id)
 
     ### JOBS ###
     def purge_available_jobs(self) -> None:

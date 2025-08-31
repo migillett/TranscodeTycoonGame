@@ -31,7 +31,7 @@ async def update_user_info(
     user_info: UserInfo = Depends(get_current_user)
 ) -> UserInfo:
     return game_logic.update_user(
-        user_id=user_info.user_id,
+        user_info=user_info,
         user_update=user_update_payload
     )
 

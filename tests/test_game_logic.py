@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 
 from transcode_tycoon.game_logic import TranscodeTycoonGameLogic, InsufficientResources
 from transcode_tycoon.models.computer import HardwareType
+from transcode_tycoon.models.users import PatchUserInfo
 
 
 ### CORE FUNCTIONS ###
@@ -64,6 +65,28 @@ def test_upgrades():
 
     print('=== UPGRADES TESTS PASSED ===')
 
+
+### USERS ###
+def test_users():
+    print('=== TESTING USER FUNCTIONS ===')
+
+    user_logic = TranscodeTycoonGameLogic(disable_backups=True)
+    test_user = user_logic.create_user().user_info
+
+    assert test_user.username == ''
+
+    update_payload = PatchUserInfo(username='testing')
+    
+    user_logic.update_user(
+        user_info=test_user,
+        user_update=update_payload
+    )
+    
+    assert user_logic.get_user(test_user.user_id).username == update_payload.username
+
+    print('=== USER TESTS PASSED ===')
+
+
 ### JOBS ###
 def test_jobs():
     print('=== TESTING JOB FUNCTIONS ===')
@@ -104,4 +127,4 @@ def test_jobs():
     assert len(test_job_user.job_queue) == 0
     assert len(test_job_user.completed_jobs) == max_user_jobs
 
-    print('=== JOB TESTS COMPLETE ===')
+    print('=== JOB TESTS PASSED ===')

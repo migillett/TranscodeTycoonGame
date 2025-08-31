@@ -47,6 +47,10 @@ def test_api_functions():
     update_response = client.patch('/users/my_info', params=update_params)
     assert update_response.status_code == 403
 
+    # don't allow usernames with > 50 characters
+    update_response = client.patch('/users/my_info', params={'username': 'asdfgasdfgasdfgasdfgasdfgasdfgasdfgasdfgasdfgasdfgasdfg'})
+    assert update_response.status_code == 403
+
     # leaderboard should return at least 2 users
     leaderboard_response = client.get('/users/leaderboard')
     assert leaderboard_response.status_code == 200

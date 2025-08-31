@@ -4,6 +4,6 @@ services:
     user: "1000:1000"
     build: .
     ports:
-      - 8000:8000
+      - "8000:8000"
     restart: unless-stopped
   

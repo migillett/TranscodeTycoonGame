@@ -3,6 +3,8 @@ services:
     container_name: transcode_tycoon_api
     user: "1000:1000"
     build: .
+    volumes:
+      - ./data:/home/transcode_tycoon/transcode_tycoon/data
     ports:
       - "8000:8000"
     restart: unless-stopped

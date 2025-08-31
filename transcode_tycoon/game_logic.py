@@ -2,6 +2,8 @@ import logging
 from datetime import datetime, timedelta
 from uuid import uuid4
 from random import choice
+import json
+from os import path, makedirs
 
 from transcode_tycoon.models.users import UserInfo, CreateUserResponse
 from transcode_tycoon.models.jobs import JobInfo, JobInfoQueued, JobStatus, Format, Priority
@@ -36,9 +38,16 @@ class TranscodeTycoonGameLogic:
         self.jobs: dict[str, JobInfo] = {}
         self.job_capacity = job_board_capacity
 
+        self.json_backup = path.join(
+            path.dirname(path.abspath(__file__)),
+            'data', 'tycoon_state.json'
+        )
+        
         self.base_price = 20
         self.cost_multiplier = 1.5
         self.initial_funds = 40
+
+        self.__load_state__()
 
     ### UTILITIES ###
     def __calculate_render_difficulty__(self, job_info: JobInfo) -> float:
@@ -57,6 +66,28 @@ class TranscodeTycoonGameLogic:
         pps = (pixels * 30) * job_info.total_run_time
         # in millions of pixels
         return round(pps / 1_000_000, 2)
+    
+    def __dump_state__(self) -> None:
+        if not path.exists(path.dirname(self.json_backup)):
+            makedirs(path.dirname(self.json_backup))
+
+        with open(self.json_backup, 'w') as json_file:
+            user_dump = {
+                k: v.model_dump() for k, v in self.users.items()
+            }
+            json.dump(user_dump, json_file, indent=2)
+            logger.info(f'Dumped users to: {self.json_backup}')
+
+    def __load_state__(self) -> None:
+        if path.exists(self.json_backup):
+            with open(self.json_backup, 'r') as json_file:
+                user_load = json.load(json_file)
+                self.users = {
+                    k: UserInfo.model_validate(v) for k, v in user_load.items()
+                }
+                logger.info(f'Successfully loaded JSON backup file: {self.json_backup}')
+        else:
+            logger.info(f'Unable to load previous user state. File does not exist.')
 
     ### COMPUTERS ###
     def __calculate_completion_timedelta__(self, job_info: JobInfo, computer_info: ComputerInfo) -> float:
@@ -107,6 +138,7 @@ class TranscodeTycoonGameLogic:
             raise InsufficientResources(
                 f"You lack enough funds to purchase this upgrade. Price: ${hardware_stat.upgrade_price} | Funds: ${user_info.funds}"
             )
+        user_info.funds -= hardware_stat.upgrade_price
         hardware_stat.current_level += 1
         logger.info(f'User {user_info.user_id} upgraded {upgrade_type} to level {hardware_stat.current_level} for ${hardware_stat.upgrade_price}')
         hardware_stat.value += hardware_stat.upgrade_increment
@@ -170,6 +202,7 @@ class TranscodeTycoonGameLogic:
                 job.status = JobStatus.IN_PROGRESS
             else:
                 job.status = JobStatus.QUEUED
+        self.__dump_state__()
 
     def __left_weighted_trt__(self, min_value: int = 30, max_value: int = 7200) -> float:
         alpha, beta = 1, 6

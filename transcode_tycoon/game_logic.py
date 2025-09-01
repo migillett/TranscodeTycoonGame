@@ -72,7 +72,7 @@ class TranscodeTycoonGameLogic:
                 raise UnsupportedFormatError(f"Unsupported format: {job_info.format}")
         # assuming 30 fps
         pps = (pixels * 30) * job_info.total_run_time
-        # in millions of pixels
+        # in megabits per second
         return round(pps / 1_000_000, 2)
     
     def __dump_state__(self) -> None:
@@ -148,9 +148,14 @@ class TranscodeTycoonGameLogic:
         )
 
     def purchase_upgrade(self, user_info: UserInfo, upgrade_type: HardwareType) -> UserInfo:
-        hardware_stat = user_info.computer.hardware.get(upgrade_type)
-        if hardware_stat is None:
-            raise ItemNotFoundError(f'Computer does not have a {upgrade_type.value} to upgrade.')
+        existing_hardware = True
+        if upgrade_type == HardwareType.GPU and HardwareType.GPU not in user_info.computer.hardware:
+            # GPUS aren't included in the default computers, so we can't upgrade an existing item
+            hardware_stat = self.starter_gpu()
+            existing_hardware = False
+        else:
+            hardware_stat = user_info.computer.hardware[upgrade_type]
+
         if hardware_stat.upgrade_price > user_info.funds:
             raise InsufficientResources(
                 f"You lack enough funds to purchase a {upgrade_type} upgrade. Price: ${hardware_stat.upgrade_price} | Funds: ${user_info.funds}"

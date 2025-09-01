@@ -38,19 +38,26 @@ def test_upgrades():
 
     game_logic_upgrades = TranscodeTycoonGameLogic(disable_backups=True)
 
+    starter_gpu = game_logic_upgrades.starter_gpu()
+
     test_upgrade_user = game_logic_upgrades.create_user().user_info
+    test_upgrade_user.funds += starter_gpu.upgrade_price
+
     for upgrade_type in HardwareType:
         initial_wallet_value = test_upgrade_user.funds
-        purchase_price = test_upgrade_user.computer.hardware[upgrade_type].upgrade_price
 
-        # all upgrades at this point should be level 1
-        assert test_upgrade_user.computer.hardware[upgrade_type].current_level == 1
+        if upgrade_type == HardwareType.GPU:
+            purchase_price = starter_gpu.upgrade_price
+        else:
+            purchase_price = test_upgrade_user.computer.hardware[upgrade_type].upgrade_price
+            # all upgrades at this point should be level 1
+            assert test_upgrade_user.computer.hardware[upgrade_type].current_level == 1
 
-        game_logic_upgrades.purchase_upgrade(
+        test_upgrade_user = game_logic_upgrades.purchase_upgrade(
             user_info=test_upgrade_user,
             upgrade_type=upgrade_type
         )
-        assert test_upgrade_user.computer.hardware[upgrade_type].current_level == 2
+        assert test_upgrade_user.computer.hardware[upgrade_type].current_level == 2 if upgrade_type != HardwareType.GPU else 1
         assert test_upgrade_user.funds == (initial_wallet_value - purchase_price)
 
         print(f'Successfully upgraded: {upgrade_type}')

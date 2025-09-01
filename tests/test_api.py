@@ -32,6 +32,8 @@ def test_api_functions():
     user_info_base = client.get('/users/my_info', headers=headers)
     assert user_info_base.status_code == 200
 
+    game_logic.users[user_info_base.json()['user_id']].funds += 250
+
     # register another user and make sure the user id and token are different
     new_user_2 = client.post('/register').json()
     assert new_user_2['token'] != register_response['token']

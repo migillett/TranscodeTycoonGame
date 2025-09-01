@@ -75,7 +75,7 @@ class TranscodeTycoonGameLogic:
                 raise UnsupportedFormatError(f"Unsupported format: {job_info.format}")
         # assuming 30 fps
         pps = (pixels * 30) * job_info.total_run_time
-        # in millions of pixels
+        # in megabits per second
         return round(pps / 1_000_000, 2)
     
     def __dump_state__(self) -> None:
@@ -120,19 +120,19 @@ class TranscodeTycoonGameLogic:
                     value=2.0,
                     unit='Cores',
                     upgrade_increment=2.0,
-                    upgrade_price=20.0
+                    upgrade_price=20.0,
                 ),
                 HardwareType.RAM: HardwareStats(
                     value=2.0,
                     unit='GB',
                     upgrade_increment=1.0,
-                    upgrade_price=10.0
+                    upgrade_price=10.0,
                 ),
                 HardwareType.CLOCK_SPEED: HardwareStats(
                     value=2.0,
                     unit='GHz',
                     upgrade_increment=1.0,
-                    upgrade_price=10.0
+                    upgrade_price=10.0,
                 )
             }
         )
@@ -142,16 +142,35 @@ class TranscodeTycoonGameLogic:
         """Get cost for the next upgrade"""
         return round(self.base_price * (self.cost_multiplier ** hardware_stat.current_level), 2)
     
+    def starter_gpu(self) -> HardwareStats:
+        return HardwareStats(
+            current_level=1,
+            value=50.0,
+            unit='H.264 Accelerators',
+            upgrade_increment=50.0,
+            upgrade_price=250.0,
+        )
+
     def purchase_upgrade(self, user_info: UserInfo, upgrade_type: HardwareType) -> UserInfo:
-        hardware_stat = user_info.computer.hardware.get(upgrade_type)
-        if hardware_stat is None:
-            raise ItemNotFoundError(f'Computer does not have a {upgrade_type.value} to upgrade.')
+        existing_hardware = True
+        if upgrade_type == HardwareType.GPU and HardwareType.GPU not in user_info.computer.hardware:
+            # GPUS aren't included in the default computers, so we can't upgrade an existing item
+            hardware_stat = self.starter_gpu()
+            existing_hardware = False
+        else:
+            hardware_stat = user_info.computer.hardware[upgrade_type]
+
         if hardware_stat.upgrade_price > user_info.funds:
             raise InsufficientResources(
                 f"You lack enough funds to purchase this upgrade. Price: ${hardware_stat.upgrade_price} | Funds: ${user_info.funds}"
             )
+        
+        if existing_hardware:
+            hardware_stat.current_level += 1
+        else:
+            user_info.computer.hardware[upgrade_type] = hardware_stat
+
         user_info.funds -= hardware_stat.upgrade_price
-        hardware_stat.current_level += 1
         logger.info(f'User {user_info.user_id} upgraded {upgrade_type} to level {hardware_stat.current_level} for ${hardware_stat.upgrade_price}')
         hardware_stat.value += hardware_stat.upgrade_increment
         hardware_stat.upgrade_price = self.calculate_next_upgrade_cost(hardware_stat)

@@ -1,7 +1,7 @@
 from enum import StrEnum
-from uuid import uuid4
+from typing import Optional
 
-from pydantic import BaseModel, Field, computed_field
+from pydantic import BaseModel, Field, computed_field, PrivateAttr
 
 
 class HardwareStats(BaseModel):
@@ -15,7 +15,7 @@ class HardwareType(StrEnum):
     CPU_CORES = "CPU_CORES"
     CLOCK_SPEED = "CLOCK_SPEED"
     RAM = "RAM"
-    # GPU = "GPU" # TODO - how to handle upgrades where level == 0?
+    GPU = "GPU"
 
 class ComputerInfo(BaseModel):
     hardware: dict[HardwareType, HardwareStats] = Field(default_factory=dict)
@@ -23,11 +23,13 @@ class ComputerInfo(BaseModel):
     @computed_field
     @property
     def processing_power(self) -> float:
-        power = 1
-        for hardware_type, stat in self.hardware.items():
-            if hardware_type != HardwareType.RAM:
-                # RAM is only used for job queue capacity, not how fast you can do the jobs
-                power *= stat.value
+        # 1Hz == 1 pixel calculated
+        # 1 core cpu * 1Ghz = 1mbps
+        # 2 cores * 2Ghz = 4mbps
+        power = self.hardware[HardwareType.CPU_CORES].value
+        power *= self.hardware[HardwareType.CLOCK_SPEED].value
+        if HardwareType.GPU in self.hardware:
+            power *= self.hardware[HardwareType.GPU].value
         return power
 
 class UpgradePayload(BaseModel):

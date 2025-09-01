@@ -23,6 +23,7 @@ async def list_available_jobs(job_id: Optional[str] = None) -> list[JobInfo] | J
     '''
     Query for a specific job or all available jobs
     '''
+    game_logic.prune_available_jobs()
     game_logic.create_new_jobs()
     if job_id:
         try:

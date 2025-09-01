@@ -2,7 +2,7 @@
 from datetime import datetime
 from uuid import uuid4
 
-from pydantic import BaseModel, computed_field, Field
+from pydantic import BaseModel, computed_field, Field, PrivateAttr
 from enum import StrEnum
 
 
@@ -32,6 +32,7 @@ class JobInfo(BaseModel):
     priority: Priority = Priority.LOW
     total_run_time: float  # in seconds
     format: Format
+    _creation_ts: datetime = PrivateAttr(default_factory=datetime.now)
 
     @computed_field
     @property

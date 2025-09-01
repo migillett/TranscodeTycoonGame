@@ -26,7 +26,7 @@ def test_game_logic():
     for job_id in game_logic_core.jobs:
         assert game_logic_core.get_job(job_id).job_id == job_id
 
-    game_logic_core.purge_available_jobs()
+    game_logic_core.prune_available_jobs(datetime.now() + timedelta(days=1))
     assert len(game_logic_core.jobs) == 0
     
     print('=== GAME LOGIC TESTS PASSED ===')
@@ -95,7 +95,7 @@ def test_jobs():
 
     test_job_user = game_logic_jobs.create_user().user_info
 
-    game_logic_jobs.purge_available_jobs()
+    game_logic_jobs.prune_available_jobs(cutoff_timestamp=datetime.now() + timedelta(days=1))
     game_logic_jobs.create_new_jobs()
 
     max_user_jobs = int(test_job_user.computer.hardware[HardwareType.RAM].value)

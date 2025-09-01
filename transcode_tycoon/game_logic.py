@@ -43,6 +43,7 @@ class TranscodeTycoonGameLogic:
         self.job_capacity = job_board_capacity
         self.initial_funds = initial_funds
         self.disable_backups = disable_backups
+        self.purge_old_job_timedelta = timedelta(hours=6)
 
         self.users: dict[str, UserInfo] = {}
         # TODO: create user-specific job boards to prevent pulling the same job twice
@@ -197,8 +198,19 @@ class TranscodeTycoonGameLogic:
         return self.get_user(user_info.user_id)
 
     ### JOBS ###
-    def purge_available_jobs(self) -> None:
-        self.jobs = {}
+    def prune_available_jobs(self, cutoff_timestamp: datetime | None = None) -> None:
+        '''
+        deletes all jobs where the creation timestamp is <= cutoff timestamp
+        '''
+        if cutoff_timestamp is None:
+            cutoff_timestamp = datetime.now() - self.purge_old_job_timedelta
+        # drop jobs older than 6 hours ago
+        pruned_jobs = {}
+        for k, v in self.jobs.items():
+            if v._creation_ts > cutoff_timestamp:
+                pruned_jobs[k] = v
+        logger.info(f'Dropping {len(self.jobs) - len(pruned_jobs)} old jobs from the board')
+        self.jobs = pruned_jobs
 
     def check_user_jobs(self, user_info: UserInfo) -> None:
         '''

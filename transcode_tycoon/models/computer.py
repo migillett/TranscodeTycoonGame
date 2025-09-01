@@ -1,5 +1,4 @@
 from enum import StrEnum
-from uuid import uuid4
 
 from pydantic import BaseModel, Field, computed_field
 
@@ -9,7 +8,13 @@ class HardwareStats(BaseModel):
     value: float
     unit: str # GHz, Cores, GB
     upgrade_increment: float # what the next value will be
-    upgrade_price: float
+    upgrade_price: float = 50.0
+
+    def upgrade(self) -> None:
+        self.current_level += 1
+        self.value += self.upgrade_increment
+        self.upgrade_price = round(
+            50.0 * ((self.upgrade_increment * 1.1) ** self.current_level), 2)
 
 class HardwareType(StrEnum):
     CPU_CORES = "CPU_CORES"

@@ -97,7 +97,7 @@ def test_api_functions():
         params={'upgrade_type': HardwareType.CPU_CORES},
         headers=headers
     )
-    assert unauth_upgrade_response.status_code == 402
+    assert unauth_upgrade_response.status_code == 402, print(f'{unauth_upgrade_response.json()}')
 
     ### JOBS ###
 

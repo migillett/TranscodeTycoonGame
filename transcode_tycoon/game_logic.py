@@ -54,9 +54,6 @@ class TranscodeTycoonGameLogic:
             path.dirname(path.abspath(__file__)),
             'data', 'tycoon_state.json'
         )
-        
-        self.base_price = 20
-        self.cost_multiplier = 1.5
 
         self.__load_state__()
 
@@ -114,47 +111,57 @@ class TranscodeTycoonGameLogic:
         return round(difficulty / computer_info.processing_power, 4)
     
     def create_new_computer(self) -> ComputerInfo:
+        cpu_cores = HardwareStats(
+            value=2.0,
+            unit='Cores',
+            upgrade_increment=2.0,
+        )
+
+        ram = HardwareStats(
+            value=2.0,
+            unit='GB',
+            upgrade_increment=1.0,
+        )
+
+        clock_speed = HardwareStats(
+            value=2.0,
+            unit='GHz',
+            upgrade_increment=1.0,
+        )
+
         comp = ComputerInfo(
             hardware={
-                HardwareType.CPU_CORES: HardwareStats(
-                    value=2.0,
-                    unit='Cores',
-                    upgrade_increment=2.0,
-                    upgrade_price=20.0
-                ),
-                HardwareType.RAM: HardwareStats(
-                    value=2.0,
-                    unit='GB',
-                    upgrade_increment=1.0,
-                    upgrade_price=10.0
-                ),
-                HardwareType.CLOCK_SPEED: HardwareStats(
-                    value=2.0,
-                    unit='GHz',
-                    upgrade_increment=1.0,
-                    upgrade_price=10.0
-                )
+                HardwareType.CPU_CORES: cpu_cores,
+                HardwareType.RAM: ram,
+                HardwareType.CLOCK_SPEED:clock_speed
             }
         )
         return comp
     
-    def calculate_next_upgrade_cost(self, hardware_stat: HardwareStats) -> float:
-        """Get cost for the next upgrade"""
-        return round(self.base_price * (self.cost_multiplier ** hardware_stat.current_level), 2)
-    
+    def starter_gpu(self) -> HardwareStats:
+        return HardwareStats(
+            current_level=1,
+            value=50.0,
+            unit='H.264 Accelerators',
+            upgrade_increment=50.0,
+            upgrade_price=250.0,
+        )
+
     def purchase_upgrade(self, user_info: UserInfo, upgrade_type: HardwareType) -> UserInfo:
         hardware_stat = user_info.computer.hardware.get(upgrade_type)
         if hardware_stat is None:
             raise ItemNotFoundError(f'Computer does not have a {upgrade_type.value} to upgrade.')
         if hardware_stat.upgrade_price > user_info.funds:
             raise InsufficientResources(
-                f"You lack enough funds to purchase this upgrade. Price: ${hardware_stat.upgrade_price} | Funds: ${user_info.funds}"
+                f"You lack enough funds to purchase a {upgrade_type} upgrade. Price: ${hardware_stat.upgrade_price} | Funds: ${user_info.funds}"
             )
+        
         user_info.funds -= hardware_stat.upgrade_price
-        hardware_stat.current_level += 1
-        logger.info(f'User {user_info.user_id} upgraded {upgrade_type} to level {hardware_stat.current_level} for ${hardware_stat.upgrade_price}')
-        hardware_stat.value += hardware_stat.upgrade_increment
-        hardware_stat.upgrade_price = self.calculate_next_upgrade_cost(hardware_stat)
+        logger.info(f'User {user_info.user_id} purchased {upgrade_type} upgrade for {hardware_stat.upgrade_price}.')
+        if existing_hardware:
+            hardware_stat.upgrade()
+        else:
+            user_info.computer.hardware[upgrade_type] = hardware_stat
         return user_info
         
     ### USERS ###

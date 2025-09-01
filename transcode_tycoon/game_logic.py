@@ -109,29 +109,23 @@ class TranscodeTycoonGameLogic:
         return round(difficulty / computer_info.processing_power, 4)
     
     def create_new_computer(self) -> ComputerInfo:
-        cpu_cores = HardwareStats(
-            value=2.0,
-            unit='Cores',
-            upgrade_increment=2.0,
-        )
-
-        ram = HardwareStats(
-            value=2.0,
-            unit='GB',
-            upgrade_increment=1.0,
-        )
-
-        clock_speed = HardwareStats(
-            value=2.0,
-            unit='GHz',
-            upgrade_increment=1.0,
-        )
-
         comp = ComputerInfo(
             hardware={
-                HardwareType.CPU_CORES: cpu_cores,
-                HardwareType.RAM: ram,
-                HardwareType.CLOCK_SPEED:clock_speed
+                HardwareType.CPU_CORES: HardwareStats(
+                    value=2.0,
+                    unit='Cores',
+                    upgrade_increment=2.0,
+                ),
+                HardwareType.RAM: HardwareStats(
+                    value=2.0,
+                    unit='GB',
+                    upgrade_increment=1.0,
+                ),
+                HardwareType.CLOCK_SPEED: HardwareStats(
+                    value=2.0,
+                    unit='GHz',
+                    upgrade_increment=1.0,
+                )
             }
         )
         return comp

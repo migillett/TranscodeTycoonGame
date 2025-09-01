@@ -36,12 +36,10 @@ class TranscodeTycoonGameLogic:
     def __init__(
             self,
             job_board_capacity: int = 25,
-            initial_funds: float = 40.0,
             disable_backups: bool = False,
         ) -> None:
         
         self.job_capacity = job_board_capacity
-        self.initial_funds = initial_funds
         self.disable_backups = disable_backups
         self.purge_old_job_timedelta = timedelta(hours=6)
 
@@ -189,10 +187,11 @@ class TranscodeTycoonGameLogic:
         user_token = str(uuid4())
 
         user_id = self.hash_token_to_user_id(user_token)
+        computer = self.create_new_computer()
         user = UserInfo(
             user_id=user_id,
-            funds=self.initial_funds,
-            computer=self.create_new_computer()
+            funds=sum([x.upgrade_price for x in computer.hardware.values()]),
+            computer=computer
         )
         self.users[user_id] = user
         logger.info(f'Created new user: {user.user_id}')

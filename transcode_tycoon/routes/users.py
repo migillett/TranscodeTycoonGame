@@ -45,6 +45,7 @@ async def lookup_user_by_id(user_id: str) -> LeaderboardUser:
             completed_jobs=len(user_info.completed_jobs),
             funds=user_info.funds,
             processing_power=user_info.computer.processing_power,
+            total_revenue=user_info.total_revenue,
         )
     except ItemNotFoundError as e:
         raise HTTPException(
@@ -65,7 +66,7 @@ async def get_leaderboard(start: int = 0, items: int = 10) -> Leaderboard:
 
     users_sorted = sorted(
         game_logic.users.values(),
-        key=lambda u: u.funds,
+        key=lambda u: u.total_revenue,
         reverse=True
     )
     return Leaderboard(
@@ -79,6 +80,7 @@ async def get_leaderboard(start: int = 0, items: int = 10) -> Leaderboard:
                 completed_jobs=len(user.completed_jobs),
                 funds=user.funds,
                 processing_power=user.computer.processing_power,
+                total_revenue=user.total_revenue,
             ) for index, user in enumerate(users_sorted[start:start + items])
         ]
     )

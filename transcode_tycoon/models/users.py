@@ -3,7 +3,7 @@ from typing import Optional
 from transcode_tycoon.models.jobs import JobInfoQueued
 from transcode_tycoon.models.computer import ComputerInfo
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, computed_field
 
 
 class UserInfo(BaseModel):
@@ -13,6 +13,11 @@ class UserInfo(BaseModel):
     job_queue: list[JobInfoQueued] = []
     funds: float
     computer: ComputerInfo = ComputerInfo()
+
+    @computed_field
+    @property
+    def total_revenue(self) -> float:
+        return round(sum(j.payout for j in self.completed_jobs), 2)
 
 class PatchUserInfo(BaseModel):
     username: Optional[str] = Field(max_length=50, default='')
@@ -24,6 +29,7 @@ class LeaderboardUser(BaseModel):
     completed_jobs: int
     processing_power: float
     funds: float
+    total_revenue: float
 
 
 class Leaderboard(BaseModel):

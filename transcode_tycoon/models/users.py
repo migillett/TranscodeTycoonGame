@@ -11,7 +11,7 @@ class UserInfo(BaseModel):
     username: Optional[str] = Field(max_length=50, default='')
     completed_jobs: list[JobInfoQueued] = []
     job_queue: list[JobInfoQueued] = []
-    funds: float
+    funds: float = 0.0
     computer: ComputerInfo = ComputerInfo()
 
     @computed_field

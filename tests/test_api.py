@@ -32,7 +32,9 @@ def test_api_functions():
     user_info_base = client.get('/users/my_info', headers=headers)
     assert user_info_base.status_code == 200
 
-    game_logic.users[user_info_base.json()['user_id']].funds += 250
+    game_logic.users[user_info_base.json()['user_id']].funds += sum(
+        [x['upgrade_price'] for x in user_info_base.json()['computer']['hardware'].values()]
+    ) + game_logic.starter_gpu().upgrade_price
 
     # register another user and make sure the user id and token are different
     new_user_2 = client.post('/register').json()

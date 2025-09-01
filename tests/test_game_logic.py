@@ -41,7 +41,9 @@ def test_upgrades():
     starter_gpu = game_logic_upgrades.starter_gpu()
 
     test_upgrade_user = game_logic_upgrades.create_user().user_info
-    test_upgrade_user.funds += starter_gpu.upgrade_price
+    test_upgrade_user.funds += sum(
+        [x.upgrade_price for x in test_upgrade_user.computer.hardware.values()]
+    ) + starter_gpu.upgrade_price
 
     for upgrade_type in HardwareType:
         initial_wallet_value = test_upgrade_user.funds

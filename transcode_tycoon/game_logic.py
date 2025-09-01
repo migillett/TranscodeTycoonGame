@@ -190,7 +190,6 @@ class TranscodeTycoonGameLogic:
         computer = self.create_new_computer()
         user = UserInfo(
             user_id=user_id,
-            funds=sum([x.upgrade_price for x in computer.hardware.values()]),
             computer=computer
         )
         self.users[user_id] = user

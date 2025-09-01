@@ -16,7 +16,6 @@ router = APIRouter(
 )
 
 
-
 @router.post('/purchase')
 async def upgrade_computer(upgrade_type: HardwareType, user_info: UserInfo = Depends(get_current_user)) -> UserInfo:
     try:
@@ -38,7 +37,10 @@ async def upgrade_computer(upgrade_type: HardwareType, user_info: UserInfo = Dep
 @router.get('/list')
 async def get_available_upgrades(user_info: UserInfo = Depends(get_current_user)) -> dict[HardwareType, HardwareStats]:
     try:
-        return user_info.computer.hardware
+        user_hardware = user_info.computer.hardware
+        if HardwareType.GPU not in user_info.computer.hardware:
+            user_hardware[HardwareType.GPU] = game_logic.starter_gpu()
+        return user_hardware
     except ItemNotFoundError as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

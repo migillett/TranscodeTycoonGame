@@ -31,8 +31,10 @@ class ComputerInfo(BaseModel):
         # 1Hz == 1 pixel calculated
         # 1 core cpu * 1Ghz = 1mbps
         # 2 cores * 2Ghz = 4mbps
-        power = self.hardware[HardwareType.CPU_CORES].value
-        power *= self.hardware[HardwareType.CLOCK_SPEED].value
+        power = 1
+        for value in [HardwareType.CPU_CORES, HardwareType.CLOCK_SPEED]:
+            if value in self.hardware.keys():
+                power *= self.hardware[value].value
         if HardwareType.GPU in self.hardware:
             power *= self.hardware[HardwareType.GPU].value
         return power

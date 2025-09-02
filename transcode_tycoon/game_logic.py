@@ -115,16 +115,19 @@ class TranscodeTycoonGameLogic:
                     value=2.0,
                     unit='Cores',
                     upgrade_increment=2.0,
+                    max_level=32, # 64 cores
                 ),
                 HardwareType.RAM: HardwareStats(
                     value=2.0,
                     unit='GB',
                     upgrade_increment=1.0,
+                    max_level=32, # 32 GB
                 ),
                 HardwareType.CLOCK_SPEED: HardwareStats(
                     value=2.0,
                     unit='GHz',
-                    upgrade_increment=1.0,
+                    upgrade_increment=0.5,
+                    max_level=8, # 5 GHz
                 )
             }
         )
@@ -137,6 +140,7 @@ class TranscodeTycoonGameLogic:
             unit='H.264 Accelerators',
             upgrade_increment=50.0,
             upgrade_price=250.0,
+            max_level=8
         )
 
     def purchase_upgrade(self, user_info: UserInfo, upgrade_type: HardwareType) -> UserInfo:

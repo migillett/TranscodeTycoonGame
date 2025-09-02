@@ -3,18 +3,24 @@ from enum import StrEnum
 from pydantic import BaseModel, Field, computed_field
 
 
+class MaxUpgradesReached(Exception):
+    pass
+
+
 class HardwareStats(BaseModel):
     current_level: int = 1
     value: float
     unit: str # GHz, Cores, GB
     upgrade_increment: float # what the next value will be
     upgrade_price: float = 50.0
+    max_level: int
 
     def upgrade(self) -> None:
+        if self.current_level + 1 > self.max_level:
+            raise MaxUpgradesReached(' Maximum upgrades reached for this hardware type.')
         self.current_level += 1
         self.value += self.upgrade_increment
-        self.upgrade_price = round(
-            50.0 * ((self.upgrade_increment * 1.1) ** self.current_level), 2)
+        self.upgrade_price = round((50 * self.current_level) + self.upgrade_price, 2)
 
 class HardwareType(StrEnum):
     CPU_CORES = "CPU_CORES"

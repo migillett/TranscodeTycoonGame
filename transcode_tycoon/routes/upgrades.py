@@ -1,6 +1,6 @@
 import logging
 
-from transcode_tycoon.models.computer import HardwareType, HardwareStats
+from transcode_tycoon.models.computer import HardwareType, HardwareStats, MaxUpgradesReached
 from transcode_tycoon.models.users import UserInfo
 from transcode_tycoon.game_logic import game_logic, ItemNotFoundError, InsufficientResources
 from transcode_tycoon.utils.auth import get_current_user
@@ -31,6 +31,11 @@ async def upgrade_computer(upgrade_type: HardwareType, user_info: UserInfo = Dep
     except InsufficientResources as e:
         raise HTTPException(
             status_code=status.HTTP_402_PAYMENT_REQUIRED,
+            detail=str(e)
+        )
+    except MaxUpgradesReached as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
             detail=str(e)
         )
 

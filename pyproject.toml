@@ -1,12 +1,13 @@
 [project]
 name = "TranscodeTycoonGame"
-version = "0.2.1"
+version = "0.2.2"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "fastapi>=0.116.1",
     "httpx>=0.28.1",
+    "matplotlib>=3.10.6",
     "numpy>=2.3.2",
     "pytest>=8.4.1",
     "requests>=2.32.5",

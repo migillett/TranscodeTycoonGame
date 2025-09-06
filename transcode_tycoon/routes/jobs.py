@@ -22,6 +22,8 @@ router = APIRouter(
 async def list_available_jobs(job_id: Optional[str] = None) -> list[JobInfo] | JobInfo:
     '''
     Query for a specific job or all available jobs
+
+    Default order is alphabetical by `job_id`.
     '''
     game_logic.prune_available_jobs()
     game_logic.create_new_jobs()
@@ -43,7 +45,9 @@ async def list_available_jobs(job_id: Optional[str] = None) -> list[JobInfo] | J
 @router.post("/claim", status_code=status.HTTP_202_ACCEPTED)
 async def claim_job(job_id: str, user_info: UserInfo = Depends(get_current_user)) -> UserInfo:
     '''
-    Claims a job for a user.
+    Claims a job for a user if they have enough RAM. 1GB of RAM is equal to 1 job in the queue.
+
+    Jobs are service-wide, so it's possible that someone can claim a job before you. So be quick!
     '''
     try:
         game_logic.claim_job(job_id, user_info)

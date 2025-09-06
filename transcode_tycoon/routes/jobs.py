@@ -36,8 +36,7 @@ async def list_available_jobs(job_id: Optional[str] = None) -> list[JobInfo] | J
     else:
         jobs = sorted(
             (j for j in game_logic.jobs.values() if j.status == JobStatus.AVAILABLE),
-            key=lambda j: j.job_id,
-            reverse=True
+            key=lambda j: j.job_id
         )
         return jobs
 

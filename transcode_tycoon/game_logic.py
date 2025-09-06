@@ -35,7 +35,7 @@ class TranscodeTycoonGameLogic:
     # TODO - replace with an actual database like SQLite
     def __init__(
             self,
-            job_board_capacity: int = 25,
+            job_board_capacity: int = 50,
             disable_backups: bool = False,
         ) -> None:
         
